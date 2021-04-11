@@ -96,26 +96,3 @@ def parameter_settings(figure_no):
 					"system_size" : system_size,
 	}		
 	return config_dict
-		
-
-
-## ======================= ======================= ================== ##
-## ======================= EE, IE, EI, II =========================== ##
-
-## ================= lateral inhibition ============================= ##
-conn_strength = np.array([22.2,21.6,21.6,20.8])
-conn_width_mean = np.array([3.3, 3.3, 4.6, 4.6])/60.
-
-## ======  used in heterogeneous system  ============================ ##
-##conn_strength = np.array([22.2,6.,31.,20.8])#aii=20.8#aei=24.5 no pf, det(0)>0
-conn_strength = np.array([22.,21.6,21.6,20.8])#aii=20.8#aei=24.5
-conn_width_mean = np.array([3.3, 3.3, 2.9, 2.9])/100.#1.
-
-### parameter settings for 2pop manuscript, full model (alpha=0.2) and for different crit wavelengths
-conn_strength = np.array([11.4,11.,10.9,10.])
-#conn_strength = np.array([11.8,11.,10.9,10])
-#conn_strength = np.array([11.4,13.5,10.9,10])
-conn_width_mean = np.array([3.3, 3.3, 2.9, 2.9])/50.#2.9
-### out of PF regime:
-#conn_width_mean = np.array([3.3,3.3,1.2,1.2])/60.
-
