@@ -1,9 +1,5 @@
-#!/usr/bin/env python
 import sys
 import numpy as np
-from scipy.linalg import eigvals
-from scipy.sparse.linalg import eigs
-from scipy.sparse import csc_matrix
 
 
 
