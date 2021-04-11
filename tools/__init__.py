@@ -1,6 +1,6 @@
 import os
 
-base_path = os.environ["HOME"] + "physics/fias/projects/pattern_formation/publish/"
+base_path = os.environ["HOME"] + "/physics/fias/projects/pattern_formation/publish/"
 image_dir = base_path + "image/"
 if not os.path.exists(image_dir):
 	os.makedirs(image_dir)
