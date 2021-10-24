@@ -3,13 +3,7 @@
 
 import sys
 import numpy as np
-# import matplotlib
-# matplotlib.use('agg')
-import matplotlib.pyplot as plt
-
 from scipy import linalg
-from scipy.optimize import curve_fit
-import scipy.integrate as integrate
 
 
 from tools import Runge_Kutta_Fehlberg,get_EI_np as get_EI,save_activity,\
@@ -22,7 +16,7 @@ if __name__=="__main__":
 	figure_no = "1d"
 
 
-	## get parameter settings chosen in figure figure_no
+	# get parameter settings chosen in figure figure_no
 	config_dict = parameter_settings.parameter_settings(figure_no)
 	conn_strength = config_dict["conn_strength"]
 	conn_width_mean = config_dict["conn_width_mean"]
@@ -97,28 +91,10 @@ if __name__=="__main__":
 	M1 = get_EI.get_EI(dim, conn_width_mean, conn_strength, nE,nI, alpha, \
 						conv_params=network_params)
 
-	# mee = M1[:nE**2,:nE**2]
-	# mei = M1[:nE**2,nE**2:]
-	# mie = M1[nE**2:,:nE**2]
-	# mii = M1[nE**2:,nE**2:]
-	# fig = plt.figure()
-	# ax = fig.add_subplot(231)
-	# ax.imshow(M1,interpolation="nearest",cmap="binary")
-	# ax = fig.add_subplot(232)
-	# ax.imshow(mee[:,nE*(nE-1)//2].reshape(nE,nE),interpolation="nearest",cmap="binary")
-	# ax = fig.add_subplot(233)
-	# ax.imshow(mie[:,nE*(nE-1)//2].reshape(nE,nE),interpolation="nearest",cmap="binary")
-	# ax = fig.add_subplot(234)
-	# ax.imshow(mei[:,nE*(nE-1)//2].reshape(nE,nE),interpolation="nearest",cmap="binary")
-	# ax = fig.add_subplot(235)
-	# ax.imshow(mii[:,nE*(nE-1)//2].reshape(nE,nE),interpolation="nearest",cmap="binary")
-	# plt.show()
-
 
 	ew,vr = linalg.eig(M1,right=True)
 	max_ew = ew[np.argmax(np.real(ew))]
 	print('max_ew',max_ew,np.nanmax(np.real(ew)));sys.stdout.flush()
-	# exit()
 
 	def rhs(v,t):
 		t_inp = int(np.ceil(t) if np.ceil(t)<timesteps else np.ceil(t)-1)

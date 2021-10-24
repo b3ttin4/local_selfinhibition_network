@@ -3,29 +3,52 @@ import numpy as np
 
 
 
-def conn_profile(deltax, deltay, sigma_x, sigma_y, constant, profile_mode):
+def conn_profile(x, y, sigma_x, sigma_y, ampl, profile_mode):
+	"""
+	generates connectivitiy profile
+
+	input:
+	x: x-coordinates
+	y: y-coordinates
+	sigma_x: standard deviation in x direction
+	sigma_y: standard deviation in y direction
+	ampl: amplitude of connectivity weights
+	profile_mode: str, either 'gaussian' or 'exponential'
+
+	output:
+	r: connectivity matrix
+	"""
 	if profile_mode=='gaussian':
 		if deltay is not None:
-			delta = 1.*deltax**2/sigma_x**2 + 1.*deltay**2/sigma_y**2
-			r = constant*np.exp(-delta/2.)
+			delta = 1.*x**2/sigma_x**2 + 1.*y**2/sigma_y**2
+			r = ampl*np.exp(-delta/2.)
 		else:
-			r = constant * 1./np.sqrt(2*np.pi)/sigma_x*np.exp(-1.*deltax**2/2./sigma_x**2)
+			r = ampl * 1./np.sqrt(2*np.pi)/sigma_x*np.exp(-1.*x**2/2./sigma_x**2)
 		
 	elif profile_mode=='exponential':
 		if deltay is not None:
-			delta = np.sqrt(1.*deltax**2/sigma_x**2 + 1.*deltay**2/sigma_y**2)
-			r = constant*np.exp(-delta/2.)
+			delta = np.sqrt(1.*x**2/sigma_x**2 + 1.*y**2/sigma_y**2)
+			r = ampl*np.exp(-delta/2.)
 		else:
-			r = constant * 1./2./sigma_x*np.exp(-1.*abs(deltax)/2./sigma_x)
-	#print('r',np.nanmin(r),np.nanmax(r))		
+			r = ampl * 1./2./sigma_x*np.exp(-1.*abs(x)/2./sigma_x)
 	return r
 
 
 
-def gauss_1d_pbc(coord, mu, sigma, constant, delta_space=None,profile_mode='gaussian'):
-	## sigma can be int or array of ints with shape NxM
-	## to introduce heterogeneities
-	
+def gauss_1d_pbc(coord, mu, sigma, constant, delta_space=None, profile_mode='gaussian'):
+	''' return 1d Gaussian/exponentially distributed connectivity profile for 2d
+
+	input:
+	coord_x: x coordinates
+	coord_y: y coordinates
+	mu: mean 
+	sigma: standard deviation
+	delta_space: spacing of coordinates, default is 1
+	profile_mode: str, 'gaussian' or 'exponential'
+
+	output:
+	r: connectivity matrix
+	'''
 	if isinstance(sigma,np.ndarray):
 		sigma = sigma[:,None]
 	
@@ -44,16 +67,26 @@ def gauss_1d_pbc(coord, mu, sigma, constant, delta_space=None,profile_mode='gaus
 		deltax = np.nanmin([deltax, 1-deltax],axis=0)
 	
 	r = conn_profile(deltax, None, sigma, None, 1., profile_mode)
-	
-	#print('g0',np.nanmean(r.reshape(N,N),axis=0)[:10])
-	#print('g1',np.nanmean(r.reshape(N,N),axis=1)[:10])
+
 	return r
 	
 
 
 
 def gauss_2d_pbc(coord_x, coord_y, mu, sigma, constant, delta_space=None, profile_mode='gaussian'):
-	''' return Gaussian distributed connectivity profile for 2d'''
+	''' return 2d Gaussian/exponentially distributed connectivity profile for 2d
+
+	input:
+	coord_x: x coordinates
+	coord_y: y coordinates
+	mu: mean 
+	sigma: standard deviation
+	delta_space: spacing of coordinates, default is 1
+	profile_mode: str, 'gaussian' or 'exponential'
+
+	output:
+	r: connectivity matrix
+	'''
 	if isinstance(mu,list):
 		mu_x, mu_y = mu
 	else:
@@ -89,36 +122,42 @@ def gauss_2d_pbc(coord_x, coord_y, mu, sigma, constant, delta_space=None, profil
 	deltax = np.nanmin([deltax, 1-deltax],axis=0)
 	deltay = np.nanmin([deltay, 1-deltay],axis=0)
 	
-	## apply connectivity profile
+	# apply connectivity profile
 	r = conn_profile(deltax, deltay, sigma_x, sigma_y, constant, profile_mode)
 	
-	
-	## Exponential fct
-	#r = constant*np.exp(-np.sqrt(delta))
-	
-	## normalise integral over connectivity coming from one neuron to 1
+	# normalise integral over connectivity coming from one neuron to 1
 	N1,M1,N2,M2 = r.shape
 	normalising_factor = np.mean(r.reshape(N1*M1,N2*M2),axis=1).reshape(N1,M1)
 	r = r/normalising_factor[:,:,None,None]
-	
-	#print('g0',np.nanmean(r.reshape(N1*M1,N2*M2),axis=0)[:10])
-	#print('g1',np.nanmean(r.reshape(N1*M1,N2*M2),axis=1)[:10])
-	#print('normalising_factor',normalising_factor)
+
 	return r
 
 
-def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
+def get_EI_2d(sigmas, Ampl, nE, nI, alpha, conv_params):
+	""" generating 2d connectivity matrix
+	
+	input:
+	sigmas: list or float of standard deviation of connectivity
+	Ampl: list or float of standard deviation of connectivity
+	nE: size of excitatory units
+	nI: size of inhibitory units
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	kwargs: can contain 'add_autapses' and  must contain 'profile_mode'
+
+	output:
+	connectivity matrix
+	"""
 	sigEE = sigmas[0]
 	sigEI = sigmas[1]
 	sigIE = sigmas[2]
 	sigII = sigmas[3]
 
-	varEE = Vars[0] 
-	varEI = Vars[1]
-	varIE = Vars[2]
-	varII = Vars[3]
-	varII_a = varII*alpha
-	varII_s = varII*(1-alpha)
+	aEE = Ampl[0] 
+	aEI = Ampl[1]
+	aIE = Ampl[2]
+	aII = Ampl[3]
+	aII_a = aII*alpha
+	aII_s = aII*(1-alpha)
 	
 	nE2 = nE*nE
 	nI2 = nI*nI
@@ -142,7 +181,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	Mee = gauss_2d_pbc(coord_x, coord_y, 0, sig, 1, delta_space=1.,\
 						profile_mode=profile_mode)
 	Mee = (Mee/np.mean(Mee)).reshape(nE2,nE2)
-	MEE = varEE*Mee
+	MEE = aEE*Mee
 	del Mee
 
 	##EI matrix
@@ -153,7 +192,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	Mei = gauss_2d_pbc([coord_x1,coord_x2], [coord_y1,coord_y2], 0, sig, 1.,\
 						delta_space=1., profile_mode=profile_mode)
 	Mei = (Mei/np.mean(Mei)).reshape(nE2,nI2)
-	MEI = varEI*Mei
+	MEI = aEI*Mei
 	del Mei
 
 	##IE matrix
@@ -164,7 +203,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	Mie = gauss_2d_pbc([coord_x1,coord_x2], [coord_y1,coord_y2], 0, sig, 1.,\
 						delta_space=1., profile_mode=profile_mode)
 	Mie = (Mie/np.mean(Mie)).reshape(nI2,nE2)
-	MIE = varIE*Mie
+	MIE = aIE*Mie
 	del Mie
 
 
@@ -174,7 +213,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	Mii = gauss_2d_pbc(coord_x, coord_y, 0, sig, 1, delta_space=1.,\
 						profile_mode=profile_mode)
 	Mii = (Mii/np.mean(Mii)).reshape(nI2,nI2)
-	MII = Mii*varII_s
+	MII = Mii*aII_s
 	del Mii
 	
 	try:
@@ -183,7 +222,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 			Mii_autapse = gauss_2d_pbc(coord_x, coord_y, 0, 0.1/100., 1,\
 				delta_space=1., profile_mode=profile_mode)
 		
-			Mii_autapse = varII_a*(Mii_autapse/np.mean(Mii_autapse)).reshape(nI2,nI2)
+			Mii_autapse = aII_a*(Mii_autapse/np.mean(Mii_autapse)).reshape(nI2,nI2)
 			MII += Mii_autapse
 	except:
 		pass
@@ -199,21 +238,34 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	return M1
 
 
-def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
+def get_EI_1d(sigmas, Ampl, nE, nI, alpha, **kwargs):
+	""" generating 1d connectivity matrix
+	
+	input:
+	sigmas: list or float of standard deviation of connectivity
+	Ampl: list or float of standard deviation of connectivity
+	nE: size of excitatory units
+	nI: size of inhibitory units
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	kwargs: can contain 'add_autapses' and  must contain 'profile_mode'
+
+	output:
+	connectivity matrix
+	"""
 	sigEE = sigmas[0]
 	sigEI = sigmas[1]
 	sigIE = sigmas[2]
 	sigII = sigmas[3]
 
-	varEE = Vars[0]
-	varEI = Vars[1]
-	varIE = Vars[2]
-	varII = Vars[3]
-	varII_a = varII*alpha
-	varII_s = varII*(1-alpha)
+	aEE = Ampl[0]
+	aEI = Ampl[1]
+	aIE = Ampl[2]
+	aII = Ampl[3]
+	aII_a = aII*alpha
+	aII_s = aII*(1-alpha)
 	
 	##check for chosen connectivity profile
-	profile_mode = conv_params['profile_mode']
+	profile_mode = kwargs['profile_mode']
 	
 	##EE matrix
 	sig = sigEE
@@ -221,7 +273,7 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 	
 	Mee = gauss_1d_pbc(coord_x, 0, sig, 1, delta_space=1., profile_mode=profile_mode)
 	Mee = Mee/np.mean(Mee)
-	MEE = Mee * varEE
+	MEE = Mee * aEE
 	del Mee
 	
 	
@@ -231,7 +283,7 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 
 	Mei = gauss_1d_pbc([coord1, coord2], 0, sig, 1, delta_space=1., profile_mode=profile_mode)
 	Mei = Mei/np.mean(Mei)
-	MEI = Mei * varEI
+	MEI = Mei * aEI
 	del Mei
 
 
@@ -241,7 +293,7 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 
 	Mie = gauss_1d_pbc([coord1, coord2], 0, sig, 1, delta_space=1., profile_mode=profile_mode)
 	Mie = Mie/np.mean(Mie)
-	MIE = Mie * varIE
+	MIE = Mie * aIE
 	del Mie
 
 
@@ -251,14 +303,15 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 
 	Mii = gauss_1d_pbc(coord_x, 0, sig, 1, delta_space=1., profile_mode=profile_mode)
 	Mii = Mii/np.mean(Mii)
-	MII = Mii * varII_s
+	MII = Mii * aII_s
 	del Mii
 	
-	if conv_params is not None:
-		if conv_params['add_autapses']:
+	if "add_autapses" in kwargs.keys():
+		if kwargs['add_autapses']:
 			print('add_autapses',MII[:3,:3]);sys.stdout.flush()
-			Mii_autapse = gauss_1d_pbc(coord_x, 0, 0.1/100., 1, delta_space=1., profile_mode=profile_mode)
-			Mii_autapse = varII_a*(Mii_autapse/np.mean(Mii_autapse)).reshape(nI,nI)#2.8
+			Mii_autapse = gauss_1d_pbc(coord_x, 0, 0.1/100., 1, delta_space=1.,\
+										profile_mode=profile_mode)
+			Mii_autapse = aII_a*(Mii_autapse/np.mean(Mii_autapse)).reshape(nI,nI)
 			MII += Mii_autapse
 
 
@@ -272,11 +325,25 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 	return M1
 
 
-def get_EI(dim, sigmas, Vars, nE, nI, alpha, conv_params=None):
+def get_EI(dim, sigmas, Ampl, nE, nI, alpha, **kwargs):
+	""" wrapper function for connectivity matrix
+	
+	input:
+	dim: dimensionality, 1 or 2
+	sigmas: list or float of standard deviation of connectivity
+	Ampl: list or float of standard deviation of connectivity
+	nE: size of excitatory units
+	nI: size of inhibitory units
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	kwargs: can contain 'add_autapses' and  must contain 'profile_mode'
+
+	output:
+	connectivity matrix
+	"""
 	if dim==1:
-		return get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params)
+		return get_EI_1d(sigmas, Ampl, nE, nI, alpha, **kwargs)
 	elif dim==2:
-		return get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params)
+		return get_EI_2d(sigmas, Ampl, nE, nI, alpha, **kwargs)
 
 
 if __name__=="__main__":

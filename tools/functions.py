@@ -4,25 +4,76 @@ from scipy.stats import mode as modus
 
 ## Fit functions
 def gauss(x,sigma,ampl):
+	""" gaussian function
+
+	input:
+	x: coordinates
+	sigma: standard deviation
+	ampl: amplitude
+	"""
 	return ampl*np.exp(-(x-nE/2.)**2/2./sigma**2)
 
-def cosine(x,k,sigma,A):
-	return A*np.cos(x*k)*np.exp(-(x)**2/2./sigma**2)
+def cosine(x,k,sigma,ampl):
+	""" Gabor function function
+
+	input:
+	x: coordinates
+	k: frequency
+	sigma: standard deviation
+	ampl: amplitude
+	"""
+	return ampl*np.cos(x*k)*np.exp(-(x)**2/2./sigma**2)
 	
 def linfct(x,a,tau):
+	""" linear function
+
+	input:
+	x: coordinates
+	a: offset
+	tau: slope
+	"""
 	return a + x*tau
 
-## Connectivity
 def H(k,sigma):
+	""" Fourier transformed Gaussian connectivity
+
+	input:
+	k: spatial frequency
+	sigma: standard deviation
+	"""
 	return np.exp(-k**2/2.*sigma*sigma)
 
 ## Trace, Determinant and Eigenvalue
 def tracek(k,aee,aii,see,sii,tau=1,alpha=0):
+	""" Trace of recurrently connected network of E,I units, analytically determined
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	tau: ratio of excitatory to inhibitory time constant, default is 1
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	aii_s = aii*(1-alpha)
 	aii_a = aii*alpha
 	return -1 - (1 + aii_s*H(k,sii) + aii_a)/tau + aee*H(k,see)
 
 def detk(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
+	""" determinant of recurrently connected network of E,I units, analytically determined
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aeiaie: product of amplitudes of E to I and I to E connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sei: standard deviation/width of E to I connectivity
+	sii: standard deviation/width of I to I connectivity
+	tau: ratio of excitatory to inhibitory time constant, default is 1
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	aii_s = aii*(1-alpha)
 	aii_a = aii*alpha
 	return ((1 + aii_s*H(k,sii) + aii_a)*(1 - aee*H(k,see)) + aeiaie*H(k,see)*H(k,sei))/tau
@@ -30,6 +81,20 @@ def detk(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
 
 
 def eigval1(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
+	""" greater eigenvalue of recurrently connected network of E,I units,
+	analytically determined
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aeiaie: product of amplitudes of E to I and I to E connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sei: standard deviation/width of E to I connectivity
+	sii: standard deviation/width of I to I connectivity
+	tau: ratio of excitatory to inhibitory time constant, default is 1
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	tr = tracek(k,aee,aii,see,sii,tau,alpha)
 	arg = tr**2 - 4*detk(k,aee,aeiaie,aii,see,sei,sii,tau,alpha)
 	
@@ -40,6 +105,20 @@ def eigval1(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
 	return tr/2. + factor*1./2*np.sqrt(arg*sign)
 
 def eigval2(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
+	""" smaller eigenvalue of recurrently connected network of E,I units,
+	analytically determined
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aeiaie: product of amplitudes of E to I and I to E connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sei: standard deviation/width of E to I connectivity
+	sii: standard deviation/width of I to I connectivity
+	tau: ratio of excitatory to inhibitory time constant, default is 1
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	tr = tracek(k,aee,aii,see,sii,tau,alpha)
 	arg = tr**2 - 4*detk(k,aee,aeiaie,aii,see,sei,sii,tau,alpha)
 	sign = np.ones_like(arg,dtype=float)
@@ -48,13 +127,36 @@ def eigval2(k,aee,aeiaie,aii,see,sei,sii,tau=1,alpha=0):
 	factor[arg<0] = 1j
 	return tr/2. - factor*1./2*np.sqrt(arg*sign)
 
-## helper functions
+# helper functions
 def c1(k,aee,aei,aii,see,sii,alpha):
+	""" helper function c1 as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	aii_s = aii*(1-alpha)
 	aii_a = aii*alpha
 	return (aee*H(k,see) + aii_a + aii_s*H(k,sii))/(2.*aei*H(k,see))
 
 def c2(k,aee,aei,aie,aii,see,sii,alpha):
+	""" helper function c2 as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	aii_s = aii*(1-alpha)
 	aii_a = aii*alpha
 	radix = -4*aei*aie*H(k,sii)*H(k,see) + (aee*H(k,see) + aii_a + aii_s*H(k,sii))**2
@@ -73,27 +175,87 @@ def c2(k,aee,aei,aie,aii,see,sii,alpha):
 			return 1j*np.sqrt(-radix)/(2.*aei*H(k,see))
 
 def ffct(k,aee,aei,aie,aii,see,sii,alpha):
+	""" f function f as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	c1k = c1(k,aee,aie,aii,see,sii,alpha)
 	c2k = c2(k,aee,aie,aei,aii,see,sii,alpha)
 	return 1./2./c2k*(c1k+c2k)
 
 def ffct2(k,aee,aei,aie,aii,see,sii,alpha):
+	""" helper function f2 as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	c1k = c1(k,aee,aie,aii,see,sii,alpha)
 	c2k = c2(k,aee,aie,aei,aii,see,sii,alpha)
 	return -1./2./c2k*(c1k-c2k)
 
 def gfct(k,aee,aei,aie,aii,see,sii,alpha):
+	""" helper function g as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	c2k = c2(k,aee,aie,aei,aii,see,sii,alpha)
 	return 1./2./c2k
 
 def gfct2(k,aee,aei,aie,aii,see,sii,alpha):
+	""" helper function g2 as defined in manuscript in Eq.
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	"""
 	c2k = c2(k,aee,aie,aei,aii,see,sii,alpha)
 	return -1./2./c2k
 
 ## Helper functions for pulse response
 def effsigmaE(k,aee,aei,aie,aii,see,sii,alpha,t):
 	''' outputs standard deviation of Gaussian
-	in E response to pulse input; see Eq. () in manuscript '''
+	in E response to pulse input; see Eq. () in manuscript
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	t: time
+	'''
 	fk = ffct(k,aee,aie,aei,aii,see,sii,alpha)
 	dk = k[1]-k[0]
 	f1k = np.gradient(fk,dk)
@@ -110,7 +272,19 @@ def effsigmaE(k,aee,aei,aie,aii,see,sii,alpha,t):
 
 def effsigmaI(k,aee,aei,aie,aii,see,sii,alpha,t):
 	''' outputs standard deviation of Gaussian
-	in I response to pulse input; see Eq. () in manuscript '''
+	in I response to pulse input; see Eq. () in manuscript
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	t: time
+	'''
 	gk = gfct(k,aee,aie,aei,aii,see,sii,alpha)
 	dk = k[1]-k[0]
 	g1k = np.gradient(gk,dk)
@@ -127,6 +301,20 @@ def effsigmaI(k,aee,aei,aie,aii,see,sii,alpha,t):
 
 
 def deltasigma(k,aee,aei,aie,aii,see,sii,alpha,t):
+	''' difference in standard deviation of Gaussian
+	between E and I response to pulse input; see Eq. () in manuscript
+
+	input:
+	k: spatial frequency
+	aee: ampltidue E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	t: time
+	'''
 	fk = ffct(k,aee,aie,aei,aii,see,sii,alpha)
 	gk = gfct(k,aee,aie,aei,aii,see,sii,alpha)
 	dk = k[1]-k[0]
@@ -144,7 +332,19 @@ def deltasigma(k,aee,aei,aie,aii,see,sii,alpha,t):
 
 def response_smalltime(k,aee,aie,aei,aii,see,sii,alpha,times):
 	'''for small times response resembles gaussian 
-	so returns width of gaussian here (up to order t**2)'''
+	so returns width of gaussian here (up to order t**2)
+
+	input:
+	k: spatial frequency
+	aee: amplitude E to E connectivity
+	aie: amplitude of E to I connectivity
+	aei: amplitude of I to e connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	times: list of timesteps
+	'''
 	k = np.arange(-64,64,1.)
 	T = tracek(k,aee,aii,see,sii,1,alpha)
 	D = detk(k,aee,aei*aie,aii,see,sii,sii,1,alpha)
@@ -159,7 +359,20 @@ def response_smalltime(k,aee,aie,aei,aii,see,sii,alpha,times):
 
 
 def greensfkt(aee,aei,aie,aii,see,sei,sii,alpha,times,k=None):
-	''' inv FT of full greens fct '''
+	''' inv FT of full greens fct
+
+	input:
+	aee: amplitude E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sei: standard deviation/width of E to I connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	times: list of timesteps
+	k: spatial frequency
+	'''
 	if k is None:
 		k = np.arange(-64,64,1)
 	# k = np.arange(-128,128,1)
@@ -188,7 +401,19 @@ def greensfkt(aee,aei,aie,aii,see,sei,sii,alpha,times,k=None):
 
 def greensfkt2_Gaussapprox(aee,aei,aie,aii,see,sei,sii,alpha,times):
 	''' Gauss approx of greens fct in frequency space;
-	works nicely for larger times '''
+	works nicely for larger times 
+
+	input:
+	aee: amplitude E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sei: standard deviation/width of E to I connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	times: list of timesteps
+	'''
 	k = np.arange(-64,64,1.)
 	Geks, Giks = [],[]
 	l1 = eigval1(k,aee,aei*aie,aii,see,sei,sii,1,alpha)
@@ -230,7 +455,18 @@ def greensfkt2_Gaussapprox(aee,aei,aie,aii,see,sei,sii,alpha,times):
 
 def amplitude_ratio(k,aee,aei,aie,aii,see,sii,alpha,t):
 	''' return ratio in amplitude of E units vs I units of linearized dynamics 
-		for specific connectivity setting '''
+		for specific connectivity setting 
+
+	input:
+	aee: amplitude E to E connectivity
+	aei: amplitude of I to e connectivity
+	aie: amplitude of E to I connectivity
+	aii: ampltidue I to I connectivity
+	see: standard deviation/width of E to E connectivity
+	sii: standard deviation/width of I to I connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	t: timestep
+	'''
 	aii_s = aii*(1-alpha)
 	aii_a = aii*alpha
 	c1k = c1(k,aee,aie,aii,see,sii,alpha)
@@ -262,6 +498,16 @@ def amplitude_ratio(k,aee,aei,aie,aii,see,sii,alpha,t):
 
 
 def ratio_uei_approx(k,aee,aeiaie,aie,aii,aii_a,se,si):
+	""" linear approximation of amplitude ratio between E and I
+
+	input:
+	aee: amplitude E to E connectivity
+	aeiaie: product of amplitudes of I to E and E to I connectivity
+	aii: ampltidue I to I connectivity, spatially extended
+	aii: ampltidue I to I connectivity, autaptic
+	se: standard deviation/width of E to any connectivity
+	si: standard deviation/width of I to any connectivity
+	"""
 	ratio = ( aee*H(k,se)+aii*H(k,si)+aii_a + np.sqrt((aee*H(k,se)+aii_a+aii*H(k,si))**2 - 4*aeiaie*H(k,se)*H(k,si)) ) /2./aie/H(k,se)
 	#ratio = 1./2./aie * (aee + aii/H(k,se) + np.sqrt((aee+aii/H(k,se))**2-4*aeiaie*H(k,np.sqrt(se**2-si**2))) )
 	return ratio
@@ -270,6 +516,14 @@ def ratio_coeff(s, r, aee, alpha, delta, mode):
 	'''
 	return ratio in amplitude of E units vs I units
 	in phase space spanned by s, r and aee
+
+	input:
+	s: effective variable, aei*aie/(1+aii)
+	r: effective variable, s_ee^2/s_ii^2
+	aee: amplitude E to E connectivity
+	alpha: float, 0<=alpha<=1, strength of self-inhibitory connections
+	delta: difference between aee and aii, must be <2
+	mode: str, determining network mode 
 	'''
 	init_k = np.arange(0.01,50.,0.01)
 	lk = np.zeros_like(init_k)
