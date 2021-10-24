@@ -1,5 +1,8 @@
 # local_selfinhibition_network
 
+Simulation of a standard neural field model consisting of interconnected excitatory and inhibitory firing rate units [Wilson1972, Ermentrout1998]. Each excitatory unit is connected to nearby (excitatory and inhibitory) units via a distance dependent Gaussian connectivity profile. Each inhibitory unit is connected via a Gaussian connectivity profile to nearby excitatory units and only locally coupled to itself.
+
+
 Code is written in Python 3; in Python 3.8.  <br/>
 Required libraries: numpy, scipy, matplotlib
 
@@ -40,4 +43,4 @@ Licensed under MIT license.
 
 ### Scripts
 
-[Python Script]() creates figures from manuscript.
+[Python Script]() reproduces figures from manuscript.
