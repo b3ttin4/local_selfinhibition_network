@@ -5,6 +5,12 @@ import sys
 def parameter_settings(figure_no):
 	"""
 	returns parameter settings for given figure panel
+
+	input:
+	figure_no : figure number
+
+	output:
+	config_dict: dictionary of network parameters
 	"""
 
 	#############################################################
