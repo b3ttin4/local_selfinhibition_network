@@ -106,6 +106,7 @@ def gauss_2d_pbc(coord_x, coord_y, mu, sigma, constant, delta_space=None, profil
 	#print('normalising_factor',normalising_factor)
 	return r
 
+
 def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	sigEE = sigmas[0]
 	sigEI = sigmas[1]
@@ -139,7 +140,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	coord_x, coord_y = np.meshgrid(coord_e, coord_e)
 
 	Mee = gauss_2d_pbc(coord_x, coord_y, 0, sig, 1, delta_space=1.,\
-		profile_mode=profile_mode)
+						profile_mode=profile_mode)
 	Mee = (Mee/np.mean(Mee)).reshape(nE2,nE2)
 	MEE = varEE*Mee
 	del Mee
@@ -150,7 +151,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	coord_x2, coord_y2 = np.meshgrid(coord_i, coord_i)
 
 	Mei = gauss_2d_pbc([coord_x1,coord_x2], [coord_y1,coord_y2], 0, sig, 1.,\
-		delta_space=1., profile_mode=profile_mode)
+						delta_space=1., profile_mode=profile_mode)
 	Mei = (Mei/np.mean(Mei)).reshape(nE2,nI2)
 	MEI = varEI*Mei
 	del Mei
@@ -161,7 +162,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	coord_x2, coord_y2 = np.meshgrid(coord_e, coord_e)
 
 	Mie = gauss_2d_pbc([coord_x1,coord_x2], [coord_y1,coord_y2], 0, sig, 1.,\
-		delta_space=1., profile_mode=profile_mode)
+						delta_space=1., profile_mode=profile_mode)
 	Mie = (Mie/np.mean(Mie)).reshape(nI2,nE2)
 	MIE = varIE*Mie
 	del Mie
@@ -171,7 +172,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	sig = sigII
 	coord_x, coord_y = np.meshgrid(coord_i, coord_i)
 	Mii = gauss_2d_pbc(coord_x, coord_y, 0, sig, 1, delta_space=1.,\
-		profile_mode=profile_mode)
+						profile_mode=profile_mode)
 	Mii = (Mii/np.mean(Mii)).reshape(nI2,nI2)
 	MII = Mii*varII_s
 	del Mii
@@ -193,7 +194,7 @@ def get_EI_2d(sigmas, Vars, nE, nI, alpha, conv_params):
 	M1[nE2:,:nE2] = MEI.T
 	M1[nE2:,nE2:] = -MII
 	
-	M1 = 1.*M1/(nI2+nE2)
+	M1 = 1.*M1/nE2#(nI2+nE2)#
 	
 	return M1
 
@@ -269,6 +270,7 @@ def get_EI_1d(sigmas, Vars, nE, nI, alpha, conv_params=None):
 	M1 = 1.*M1/nE
 	
 	return M1
+
 
 def get_EI(dim, sigmas, Vars, nE, nI, alpha, conv_params=None):
 	if dim==1:

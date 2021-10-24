@@ -1,6 +1,14 @@
 import os
 
-base_path = os.environ["HOME"] + "/physics/fias/projects/pattern_formation/publish/"
+home_dir = os.environ["HOME"]
+current_user = os.environ["USER"]
+
+if current_user=="bettina":
+	base_path = home_dir + "/physics/fias/projects/pattern_formation/publish/"
+elif current_user=="bh2757":
+	base_path = "/burg/theory/users/bh2757/columbia/projects/pattern_formation/"
+else:
+	base_path = home_dir + "/projects/pattern_formation/"
 image_dir = base_path + "image/"
 if not os.path.exists(image_dir):
 	os.makedirs(image_dir)
@@ -14,5 +22,4 @@ network_params = {
 				"nonlinearity_rule" : 'rectifier',		#'rectifier'	'linear'
 				"dt" : 0.01,
 				"add_autapses" : True,
-
 }
